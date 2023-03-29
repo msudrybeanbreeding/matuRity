@@ -1,30 +1,70 @@
 # SHINY DASHBOARD - matuRity =========================================================================
 
+## ChatGPT commands
+# # install.packages("pak")
+# pak::pak("JamesHWade/gpttools")
+# # Enable repository from jameshwade
+# options(repos = c(
+#   jameshwade = "https://jameshwade.r-universe.dev",
+#   CRAN = "https://cloud.r-project.org"
+# ))
+# # Download and install gpttools in R
+# install.packages("gpttools")
+# # Browse the gpttools manual pages
+# help(package = "gpttools")
+Sys.setenv(OPENAI_API_KEY = "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")
 ## A tool to estimate date of maturity using vegetation index (VI)
 
 ## Tab package =========================================================================
 
 ### Packages library =================================================
+#load the shiny library
 library("shiny")
+#load the shinydashboard library
 library("shinydashboard")
+#load the dashboardthemes library
 library("dashboardthemes")
+#load the shinyjs library
 library("shinyjs")
+
 #library("shinyWidgets")
 
+# set the max size of the file that can be uploaded to the server
 options(shiny.maxRequestSize=100000*1024^2)
 
+# list of packages that will be installed if they are not already installed
 packages_to_check <- c( "shiny", "shinydashboard", "dashboardthemes", "data.table", "DT","readr", "inspectdf", 
                           "raster", "rgdal", "ggplot2", "nadiv", "segmented", "tidyverse", "future", "future.apply", "lubridate", "reshape2")
 
-package_tab <-     tabItem(
-                      tabName = "Packages",
-                           fluidPage(
-                             titlePanel("Packages library"),
-                           actionButton("check_button", "Check packages"),
-                           actionButton("install_button", "Install and Load Packages"),
-                           verbatimTextOutput("result")
-                           )
+package_tab <-     tabItem( #create a tab item
+                      tabName = "Packages", #name the tab item
+                           fluidPage( #create a fluid page
+                             titlePanel("Packages library"), #create a title panel
+                           actionButton("check_button", "Check packages"), #create a button to check packages
+                           actionButton("install_button", "Install and Load Packages"), #create a button to install and load packages
+                           verbatimTextOutput("result") #create a text output
+                           ) #close fluid page
 )
+
+#create a server function to check packages, the function will be called when the check_button is clicked
+server <- function(input, output) {
+  observeEvent(input$check_button, {
+    output$result <- renderPrint({
+      installed.packages()
+    })
+  })
+}
+
+#create a server function to install and load packages, the function will be called when the install_button is clicked
+server <- function(input, output) {
+  observeEvent(input$install_button, {
+    output$result <- renderPrint({
+      install.packages("ggplot2")
+      library(ggplot2)
+    })
+  })
+}
+
 
 
 ## Tab Content =========================================================================
@@ -262,94 +302,160 @@ ui <-  dashboardPage(
 
 ## Maturity LOESS
 mat_loess_est <- function(PlotID, data, nflights, ndays, vi_met, rgb_index, thresh) {
+  # function to calculate the date of maturity using LOESS analysis
+  # PlotID: vector of plot IDs
+  # data: data frame of the data
+  # nflights: vector of number of flights
+  # ndays: vector of number of days
+  # vi_met: name of the vegetation index
+  # rgb_index: name of the RGB index
+  # thresh: threshold of the vegetation index
   
+  # set progress bar
   setProgress(message = "Running LOESS analysis", detail = "", value = 0)
+  
+  # initialize progress bar
   p=0
   
+  # initialize results data frame
   results <- data.frame()
+  
+  # loop through each plot
+  results <- data.frame()
+    
+    # extract the data for the current plot
 
+    # run LOESS analysis
   for (k in PlotID[-1]) {
+    
+    # predict the date of maturity
     data_x <- as.numeric(unlist(data[,k]))
+    
+    # extract the date of maturity
     nge_loess_loop <- loess(data_x ~ nflights)
+    
+    # add the date of maturity to the results data frame
     fitted.nge_loop <- predict(nge_loess_loop, ndays)
     list_date_pred <- approx(fitted.nge_loop, ndays, xout = thresh) 
+    # update progress bar
     results <- rbind(results, data.frame(Plots_ID = k, Mat_LOESS = round(list_date_pred$y)))
     
     p= p+1
     setProgress(message = "Running LOESS analysis", detail = paste0("Processing plot ", k), value = as.numeric(p)/length(PlotID[-1]))
     
+  # set progress bar to complete
   }
+  
+  # set column names of the results data frame
   
   setProgress(message = "Analysis Complete", detail = "", value = 1)
   colnames(results) <- c("Plots_ID", paste0("Mat_LOESS",'_',rgb_index,'_',vi_met, '_', thresh))
   
+  # return the results data frame
   return(results)
 }
+
 
 ## Maturity SEG
 mat_seg_est <- function(PlotID, data, nflights, ndays, vi_met, rgb_index, thresh) {
   
+  # set progress bar
   setProgress(message = "Running SEG analysis", detail = "", value = 0)
   
+  # create empty list
   lm_all<-list()
+  
+  # set progress bar to 0
   p = 0
   
+  # loop through each plot
   for (j in PlotID[-1]){
     
+    # extract data for each plot
     data_x <- as.numeric(unlist(data[,j]))
+    
+    # create linear model
     mod<-lm(data_x ~ nflights) 
+    
+    # set attempts to 0
     attempts = 0
+    
+    # set if.false to false
     if.false <- F
     
+    # while if.false is false
     while(if.false == F){
       attempts <- attempts + 1
-        if(nrow(data) > 7 && attempts < 100){
+ #if the number of rows in the data is greater than 7 and the number of attempts is less than 100, then run the segmented function
+       if(nrow(data) > 7 && attempts < 100){
+          #run the segmented function with the following parameters
           seg_loop<-try(segmented(mod, seg.Z = ~ nflights, npsi = 2, control = seg.control(n.boot = 50, random=T, tol=0.01)), silent = T)
           
+          #if the segmented function returns an error, then run the lm function
           if("try-error" %in% class(seg_loop)) {
+            #run the lm function with the following parameters
             seg_loop<-lm(data_x ~ nflights)
+            #create a variable called slps that is equal to the second coefficient of the lm function
             slps <- (seg_loop$coefficients)[2]
+            #create a variable called ncpt that is equal to the first coefficient of the lm function
             ncpt <- (seg_loop$coefficients)[1]
+            #create a variable called DPM that is equal to the difference between the threshold and the intercept divided by the slope
             DPM <- round((thresh - ncpt) / slps)
+            #add the DPM variable to the lm_all list
             lm_all[[j]] <- DPM
             
+          #if the segmented function does not return an error and the psi variable is not null, then run the following code
           } else if (!is.null(seg_loop$psi)) {
             
+            #create a variable called slps that is equal to the slope of the segmented function
             slps <- slope(seg_loop)$nflights
+            #create a variable called ncpt that is equal to the intercept of the segmented function
             ncpt <- intercept(seg_loop)$nflights
             
+            #if the vegetation index is GLI or TGI, then set the slope variable equal to the minimum slope
             if ( rgb_index == "GLI" || rgb_index == "TGI" ) {
               slope <- min(slps[,1])
+            #if the vegetation index is HI, then set the slope variable equal to the maximum slope
             } else if (rgb_index == "HI") {
               slope <- max(slps[,1])
+            #if the vegetation index is not GLI, TGI, or HI, then print an error message
             } else {
               print("Vegetation index not present in the formula")
             }
+            #create a variable called slope_interc that is equal to the index of the slope variable
             slope_interc <- which(slps[,1] == slope)
+            #create a variable called B1_interc that is equal to the intercept at the slope_interc index
             B1_interc <- ncpt[slope_interc,1]
             
+            #create a variable called DPM that is equal to the difference between the threshold and the intercept divided by the slope
             DPM <- round((thresh - B1_interc) / slope)
+            #add the DPM variable to the lm_all list
             lm_all[[j]] <- DPM
             
+          #if the segmented function does not return an error and the psi variable is null, then run the following code
           } else { 
+            #run the lm function with the following parameters
             seg_loop<-lm(data_x ~ nflights)
+            #create a variable called slps that is equal to the second coefficient of the lm function
             slps <- (seg_loop$coefficients)[2]
+            #create a variable called ncpt that is equal to the first coefficient of the lm function
             ncpt <- (seg_loop$coefficients)[1]
+            #create a variable called DPM that is equal to the difference between the threshold and the intercept divided by the slope
             DPM <- round((thresh - ncpt) / slps)
+            #add the DPM variable to the lm_all list
             lm_all[[j]] <- DPM
           }
           
-          
         } else {
           
-          seg_loop<-try(segmented(mod, seg.Z = ~ nflights, npsi = 1,  control = seg.control(n.boot = 50, random=T, tol=0.01)), silent = T)
+          seg_loop<-try(segmented(mod, seg.Z = ~ nflights, npsi = 1,  control = seg.control(n.boot = 50, random=T, tol=0.01)), silent = T) # try to run the segmented function
           
-          if("try-error" %in% class(seg_loop)) {
-            seg_loop<-lm(data_x ~ nflights)
-            slps <- (seg_loop$coefficients)[2]
-            ncpt <- (seg_loop$coefficients)[1]
-            DPM <- round((thresh - ncpt) / slps)
-            lm_all[[j]] <- DPM
+          if("try-error" %in% class(seg_loop)) { # if the segmented function fails, run a linear model
+            seg_loop<-lm(data_x ~ nflights) # run a linear model
+            slps <- (seg_loop$coefficients)[2] # get the slope of the linear model
+            ncpt <- (seg_loop$coefficients)[1] # get the intercept of the linear model
+            DPM <- round((thresh - ncpt) / slps) # calculate the DPM
+            lm_all[[j]] <- DPM # save the DPM
             
           } else if (!is.null(seg_loop$psi)) {
             
@@ -378,17 +484,17 @@ mat_seg_est <- function(PlotID, data, nflights, ndays, vi_met, rgb_index, thresh
           }
         }
       
-      
       if.false <- T	
      
     }
     p= p+1
     setProgress(message = "Running SEG analysis", detail = paste0("Processing plot ", j), value = as.numeric(p)/length(PlotID[-1]))
   }
-    
+  #convert the lm_all list to a dataframe
   lm_all<-melt(lm_all)
+  #add the PlotID column to the lm_all dataframe
   lm_all$PlotID <- PlotID[-1]
-  
+  #select the PlotID column and move it to the first column
   lm_all <- lm_all %>%
     dplyr::select(-L1) %>% 
     dplyr::relocate(PlotID)
@@ -401,17 +507,22 @@ mat_seg_est <- function(PlotID, data, nflights, ndays, vi_met, rgb_index, thresh
   
 }
 
+
 ## Plot figures 1
 Plot_data_dist<- function(data, flights, threshold){
+  #bind the data and flights together
   data <- bind_cols(data, flights2 = flights)
+  #convert the data to a dataframe
   data <- data.frame(data)
+  #remove the first column
 
+  #pivot the data to get the VIs values in one column
   data<- data[,-1]
   data<- data %>% 
   pivot_longer(cols = -flights2,
                names_to = "PlotID",
                values_to = "VIs")
-
+#plot the data
 ggplot(data, aes(x=flights2, y = VIs, color = PlotID)) +
   geom_line() +
   theme_classic() + 
@@ -421,18 +532,28 @@ ggplot(data, aes(x=flights2, y = VIs, color = PlotID)) +
   scale_colour_grey(start = 0.1, end = 0.9)
 }
 
+
 ## Plot figures 2 - LOESS
+# function to plot the loess curve
 Plot_data_loess<- function(PlotID, data, nflights, ndays, thresh) {
+  # create an empty data frame
 
   results_plot <- data.frame()
+  # loop through the plot ID
   
+    # extract the data for each plot
   for (k in PlotID[-1]) {
+    # fit the loess curve
     data_x <- as.numeric(unlist(data[,k]))
+    # predict the loess curve
     nge_loess_loop <- loess(data_x ~ nflights)
+    # create a data frame with the predicted values
     fitted.nge_loop <- predict(nge_loess_loop, ndays)
+    # add the data frame to the empty data frame
     data_plot_loop <- cbind(ndays,k,fitted.nge_loop)
     results_plot <- rbind(results_plot, data.frame(Mat_LOESS = data_plot_loop))
   }
+  # convert the data frame to numeric
   
   results_plot$Mat_LOESS.fitted.nge_loop <- as.numeric(results_plot$Mat_LOESS.fitted.nge_loop)
   results_plot$Mat_LOESS.k <- as.character(results_plot$Mat_LOESS.k )
@@ -448,30 +569,42 @@ ggplot(results_plot, aes(x=Mat_LOESS.ndays, y = Mat_LOESS.fitted.nge_loop, color
 
 }
 
+
 ## Check the dates
 Flight_dates_fun <- function(data){
+  # select the column Flight_date
   data %>%
     dplyr::select(Flight_date) %>% 
+    # remove the time from the date
     dplyr::mutate(Flight_date  = str_sub(Flight_date , 1, 10)) %>%
+    # remove the NA values
     dplyr::filter(nzchar(Flight_date))
 }
 
 ## Variable names
 var_name_fun <- function(rgb_idx, vi_method) {
+  # paste the two strings together
   paste(rgb_idx, vi_method, sep = "_")
 }
 
+
 ## Check the data set
 data_ajd1 <- function(data, var_name) {
+  # check if the first column is "Flight_date"
   if(colnames(data)[1] != "Flight_date"){
+    # if not, rename the first column to "Flight_date"
     data <- rename(data, Flight_date = colnames(data)[2])
   }
+  # check if the second column is "Plot_ID"
   if(colnames(data)[2] != "Plot_ID"){
+    # if not, rename the second column to "Plot_ID"
     data <- rename(data, Plot_ID = colnames(data)[3])
   }
   
+  # select the first two columns and the variable of interest
   data %>%
     dplyr::select(1:2, var_name) %>%
+    # pivot the data frame
     pivot_wider(names_from = Plot_ID, values_from = var_name)
 }
 
@@ -479,11 +612,16 @@ data_ajd1 <- function(data, var_name) {
 ## date_list
 date_list_fun <- function(nrow_dates, date, jul_date_pl, AdjJul_31){
   
+  #create a list to store the dates
   date_list2 <- list()
+  
+  #loop through the dates
   for (i in 1:nrow_dates) {
     
+    #convert the date to a date format
     new_date <- as.Date(mdy(date[i,1]))
     
+    #get the day of the year
     flight_date <- yday(new_date)
     
     MAT_ADJ1 <- flight_date - jul_date_pl
@@ -504,6 +642,7 @@ date_list_fun <- function(nrow_dates, date, jul_date_pl, AdjJul_31){
   }
   return(list(date_list2,flight_ini, flight_end))
 }
+
 
 ## Server =========================================================================
 
