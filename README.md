@@ -1,2 +1,2 @@
 # matuRity
-Days to maturity (DM) script
+Days to maturity (DM) R Shiny app
