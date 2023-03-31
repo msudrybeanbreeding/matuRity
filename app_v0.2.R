@@ -91,11 +91,11 @@ disclosure_tab <- tabItem(
   img(src = "logo.png", height =200, width = 200,style="display: block; margin-left: auto; margin-right: auto;"),
   br(),
   p("matuRity is a R Shiny application developed to help researchers obtain estimates of days to plant maturity (DM) from the vegetation index."),
-  p("Developed by Dr. Volpato and Dr. Francisco Gomez - Michigan State University"),
+  p("Developed and maintained by", tags$a(href="https://github.com/volpatoo/resume/blob/main/LV_resume2.pdf","Dr. Volpato")),
   br(),
   h4("Tutorial"),
   p("A comprehensive evaluation of the tool and a walk-through tutorial
-      on how to use matuRity is ongoing", tags$a(href="https://github.com/volpatoo/matuRity","available soon")),
+      on how to use matuRity is ongoing", tags$a(href="https://github.com/msudrybeanbreeding?tab=repositories","available soon")),
   br(),
   h4("Example files - available soon!"),
   p(downloadLink("sample1", "Data set sample 1"), br(),
@@ -105,12 +105,17 @@ disclosure_tab <- tabItem(
   h4("Citation"),
   p("Volpato, L., A. Dobbels, A. Borem, and A.J. Lorenz. 2021. Optimization of temporal UAS‐based imagery analysis to estimate plant maturity date for soybean breeding. Plant Phenome J. 4(1). doi: 10.1002/ppj2.20018."),
   br(),
+  h5("Dataset avalaible at:"),
+  p("The datasets included were collected from the UMN soybean breeding project sites in planting seasons 2018 and 2019.", tags$a(href="https://doi.org/10.25739/bc4f-x382","Soybean dataset")),         
+  br(),
   h4("Credits"),
-  p("Leonardo Volpato (volpato1@msu.edu) and Francisco Gomez (gomezfr1@msu.edu)"),
+  p("Leonardo Volpato (volpato1@msu.edu) and Francisco Gomez (gomezfr1@msu.edu) - Michigan State University (MSU)"),
   br(),
   h4("Disclaimer"),
-  p("We welcome feedback and suggestions about the usefulness of the application and make no guarantee of the correctness, reliability, or utility 
-    of the results if incorrect selections are made during the steps of MSE estimation. MaturRity is freely accessible, and the source code is hosted at https://github.com/volpatoo/matuRity")
+  p("We welcome feedback and suggestions about the usefulness of the application and make no guarantee of the correctness, reliability, or utility of 
+    the results if incorrect selections are made during the steps of DM estimation. MaturRity is freely accessible, and the source code will be hosted soon at", 
+    tags$a(href="https://github.com/msudrybeanbreeding?tab=repositories","MSU Dry Bean Breeding Program GitHub page")),
+    
   )
 
 
