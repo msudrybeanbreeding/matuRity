@@ -12,7 +12,7 @@
 # install.packages("gpttools")
 # # Browse the gpttools manual pages
 # help(package = "gpttools")
-Sys.setenv(OPENAI_API_KEY = "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")
+#Sys.setenv(OPENAI_API_KEY = "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")
 ## A tool to estimate date of maturity using vegetation index (VI)
 
 ## Tab package =========================================================================
@@ -26,6 +26,21 @@ library("shinydashboard")
 library("dashboardthemes")
 #load the shinyjs library
 library("shinyjs")
+library(data.table)
+library(DT)
+library(readr)
+library(inspectdf)
+library(raster)
+library(rgdal)
+library(ggplot2)
+library(nadiv)
+library(segmented)
+library(tidyverse)
+library(future)
+library(future.apply)
+library(lubridate)
+library(reshape2)
+
 
 #library("shinyWidgets")
 
@@ -33,7 +48,7 @@ library("shinyjs")
 options(shiny.maxRequestSize=100000*1024^2)
 
 # list of packages that will be installed if they are not already installed
-packages_to_check <- c( "shiny", "shinydashboard", "dashboardthemes", "data.table", "DT","readr", "inspectdf", 
+packages_to_check <- c("data.table", "DT","readr", "inspectdf", 
                           "raster", "rgdal", "ggplot2", "nadiv", "segmented", "tidyverse", "future", "future.apply", "lubridate", "reshape2")
 
 package_tab <-     tabItem( #create a tab item
@@ -101,9 +116,9 @@ disclosure_tab <- tabItem(
 
 ### Example files ----------------------------------------------
 
-sample1_raw="https://github.com/volpatoo/matuRity/blob/a2c6c146bc03b6957a9cde521b3b35df2468ef44/Example_files/2020_SVREC_RGB_VIs.csv"
-sample2_raw="https://github.com/volpatoo/matuRity/blob/a2c6c146bc03b6957a9cde521b3b35df2468ef44/Example_files/2021_SVREC_RGB_VIs.csv"
-sample3_raw="https://github.com/volpatoo/matuRity/blob/a2c6c146bc03b6957a9cde521b3b35df2468ef44/Example_files/2022_SVREC_RGB_VIs.csv"
+sample1_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2020_SVREC_RGB_VIs.csv"
+sample2_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2021_SVREC_RGB_VIs.csv"
+sample3_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2022_SVREC_RGB_VIs.csv"
 
 #### Vegetation index list ----------------------------------------------
 
@@ -938,16 +953,18 @@ output$message_na_data <- renderUI({
       paste("2020_SVREC_RGB_VIs.csv", sep="")
     },
     content = function(file) {
-      write.csv(read_csv(url(sample1_raw)), file)
+      data <- read_csv(url(sample1_raw))
+      write.csv(data, file, row.names = FALSE)
     }
   )
-
-  output$sample12 <- downloadHandler(
+  
+  output$sample2 <- downloadHandler(
     filename = function() {
       paste("2021_SVREC_RGB_VIs.csv", sep="")
     },
     content = function(file) {
-      write.csv(read_csv(url(sample2_raw)), file)
+      data <- read_csv(url(sample2_raw))
+      write.csv(data, file, row.names = FALSE)
     }
   )
 
@@ -956,9 +973,11 @@ output$message_na_data <- renderUI({
       paste("2022_SVREC_RGB_VIs.csv", sep="")
     },
     content = function(file) {
-      write.csv(read_csv(url(sample3_raw)), file)
+      data <- read_csv(url(sample3_raw))
+      write.csv(data, file, row.names = FALSE)
     }
   )
+  
   
     ## Variable names
     output$var_name <- renderPrint({
