@@ -3,5 +3,5 @@
 .RData
 .Ruserdata
 .Renviron
-versions/
-rsconnect/
+versions\
+rsconnect\
