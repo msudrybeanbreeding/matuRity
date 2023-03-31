@@ -36,8 +36,6 @@ library(ggplot2)
 library(nadiv)
 library(segmented)
 library(tidyverse)
-library(future)
-library(future.apply)
 library(lubridate)
 library(reshape2)
 
@@ -49,7 +47,7 @@ options(shiny.maxRequestSize=100000*1024^2)
 
 # list of packages that will be installed if they are not already installed
 packages_to_check <- c("data.table", "DT","readr", "inspectdf", 
-                          "raster", "rgdal", "ggplot2", "nadiv", "segmented", "tidyverse", "future", "future.apply", "lubridate", "reshape2")
+                          "raster", "rgdal", "ggplot2", "nadiv", "segmented", "tidyverse", "lubridate", "reshape2")
 
 package_tab <-     tabItem( #create a tab item
                       tabName = "Packages", #name the tab item
@@ -121,9 +119,9 @@ disclosure_tab <- tabItem(
 
 ### Example files ----------------------------------------------
 
-sample1_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2020_SVREC_RGB_VIs.csv"
-sample2_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2021_SVREC_RGB_VIs.csv"
-sample3_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/cce6d2380ae990c53a6a60ce43fe9b89103fad7d/Example_files-matuRity/2022_SVREC_RGB_VIs.csv"
+sample1_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/main/Example_files-matuRity/2020_SVREC_RGB_VIs.csv"
+sample2_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/main/Example_files-matuRity/2021_SVREC_RGB_VIs.csv"
+sample3_raw="https://raw.githubusercontent.com/msudrybeanbreeding/Suppl_files/main/Example_files-matuRity/2022_SVREC_RGB_VIs.csv"
 
 #### Vegetation index list ----------------------------------------------
 
@@ -327,7 +325,7 @@ mat_loess_est <- function(PlotID, data, nflights, ndays, vi_met, rgb_index, thre
   # data: data frame of the data
   # nflights: vector of number of flights
   # ndays: vector of number of days
-  # vi_met: name of the vegetation index
+  # vi_met: name of the vegetation index method
   # rgb_index: name of the RGB index
   # thresh: threshold of the vegetation index
   
@@ -546,7 +544,7 @@ Plot_data_dist<- function(data, flights, threshold){
 ggplot(data, aes(x=flights2, y = VIs, color = PlotID)) +
   geom_line() +
   theme_classic() + 
-  labs(x = 'Days', y = 'VIs value') +
+  labs(x = 'Days', y = 'VI value') +
   theme(legend.position = "none") +
   geom_abline(intercept = threshold, slope = 0, linetype = "dashed") +
   scale_colour_grey(start = 0.1, end = 0.9)
@@ -582,7 +580,7 @@ Plot_data_loess<- function(PlotID, data, nflights, ndays, thresh) {
 ggplot(results_plot, aes(x=Mat_LOESS.ndays, y = Mat_LOESS.fitted.nge_loop, color = Mat_LOESS.k)) +
   geom_line() +
   theme_classic() + 
-  labs(x = 'Days', y = 'VIs value') +
+  labs(x = 'Days', y = 'VI value') +
   theme(legend.position = "none") +
   geom_abline(intercept = thresh, slope = 0, linetype = "dashed") +
   scale_colour_grey(start = 0.1, end = 0.9)
