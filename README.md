@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/620393206.svg)](https://zenodo.org/badge/latestdoi/620393206)
+
 # Days to maturity (DM) R Shiny app
 
 # *matuRity - R shiny application to estimate days to maturity (DM) or relative maturity (RM)*
